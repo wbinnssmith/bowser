@@ -15,84 +15,168 @@
 
   var t = true
 
-  function detect(ua) {
+  var browserNames = {
+    silk: 'Amazon Silk',
+    firefox: 'Firefox',
+    seamonkey: 'SeaMonkey',
+    sailfish: 'Sailfish',
+    msedge: 'Microsoft Edge'
+  };
 
-    function getFirstMatch(regex) {
-      var match = ua.match(regex);
-      return (match && match.length > 1 && match[1]) || '';
+  function getFirstMatch(ua, regex) {
+    var match = ua.match(regex);
+    return (match && match.length > 1 && match[1]) || '';
+  }
+
+  function getSecondMatch(ua, regex) {
+    var match = ua.match(regex);
+    return (match && match.length > 1 && match[2]) || '';
+  }
+
+  function getDeviceName(ua) {
+    var iosdevice = getFirstMatch(/(ipod|iphone|ipad)/i).toLowerCase();
+    return iosdevice;
+  }
+
+  function isIOS(deviceName) {
+    return ['ipad', 'iphone', 'ipod'].indexOf(deviceName) > -1;
+  }
+
+  function getDeviceType(ua) {
+    if (/tablet/i.test(ua)) {
+      return 'tablet';
+    } else if (/[^-]mobi/i.test(ua)) {
+      return 'mobile';
     }
+  }
 
-    function getSecondMatch(regex) {
-      var match = ua.match(regex);
-      return (match && match.length > 1 && match[2]) || '';
+  function getOSName(ua, deviceName, browserName) {
+    if (/like android/i.test(ua)) {
+      return 'likeAndroid';
     }
-
-    var iosdevice = getFirstMatch(/(ipod|iphone|ipad)/i).toLowerCase()
-      , likeAndroid = /like android/i.test(ua)
-      , android = !likeAndroid && /android/i.test(ua)
-      , chromeBook = /CrOS/.test(ua)
-      , edgeVersion = getFirstMatch(/edge\/(\d+(\.\d+)?)/i)
-      , versionIdentifier = getFirstMatch(/version\/(\d+(\.\d+)?)/i)
-      , tablet = /tablet/i.test(ua)
-      , mobile = !tablet && /[^-]mobi/i.test(ua)
-      , result
-
-    if (/opera|opr/i.test(ua)) {
-      result = {
-        name: 'Opera'
-      , opera: t
-      , version: versionIdentifier || getFirstMatch(/(?:opera|opr)[\s\/](\d+(\.\d+)?)/i)
-      }
+    else if (/android/i.test(ua)) {
+      return 'android';
     }
-    else if (/yabrowser/i.test(ua)) {
-      result = {
-        name: 'Yandex Browser'
-      , yandexbrowser: t
-      , version: versionIdentifier || getFirstMatch(/(?:yabrowser)[\s\/](\d+(\.\d+)?)/i)
-      }
+    else if (/CrOS/.test(ua)) {
+      return 'chromeos';
+    }
+    else if (/sailfish/i.test(ua)) {
+      return 'sailfish';
+    }
+    else if (/tizen/i.test(ua)) {
+      return 'tizen';
+    }
+    else if (/(web|hpw)os/i.test(ua)) {
+      return 'webos';
     }
     else if (/windows phone/i.test(ua)) {
-      result = {
-        name: 'Windows Phone'
-      , windowsphone: t
-      }
-      if (edgeVersion) {
-        result.msedge = t
-        result.version = edgeVersion
-      }
-      else {
-        result.msie = t
-        result.version = getFirstMatch(/iemobile\/(\d+(\.\d+)?)/i)
-      }
+      return 'windowsphone';
+    }
+    // call non-windowsphone "windows"
+    else if (/windows/i.test(ua)) {
+      return 'windows';
+    }
+    else if (isIOS(deviceName)) {
+      return 'ios';
+    }
+    else if (/macintosh/i.test(ua) && browserName !== 'silk') {
+      return 'mac';
+    }
+    // non-desktop linux like android, sailfish, tizen, etc. will have returned
+    // by now. use 'linux' to represent desktop (or unrecognized) linuxes.
+    else if (/linux/.match(ua)) {
+      return 'linux';
+    }
+  }
+
+
+  function getOSVersion(ua) {
+  }
+
+  function getBrowserName(ua, osName) {
+    if (/opera|opr/i.test(ua)) {
+      return 'opera';
+    }
+    else if (/yabrowser/i.test(ua)) {
+      return 'yabrowser';
     }
     else if (/msie|trident/i.test(ua)) {
-      result = {
-        name: 'Internet Explorer'
-      , msie: t
-      , version: getFirstMatch(/(?:msie |rv:)(\d+(\.\d+)?)/i)
-      }
-    } else if (chromeBook) {
-      result = {
-        name: 'Chrome'
-      , chromeBook: t
-      , chrome: t
-      , version: getFirstMatch(/(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i)
-      }
-    } else if (/chrome.+? edge/i.test(ua)) {
-      result = {
-        name: 'Microsoft Edge'
-      , msedge: t
-      , version: edgeVersion
-      }
+      return 'msie';
+    }
+    else if (/firefox|iceweasel/i.test(ua)) {
+      return 'firefox';
+    }
+    else if (/chrome.+? edge/i.test(ua)) {
+      return 'msedge';
     }
     else if (/chrome|crios|crmo/i.test(ua)) {
-      result = {
-        name: 'Chrome'
-      , chrome: t
-      , version: getFirstMatch(/(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i)
-      }
+      return 'chrome';
     }
-    else if (iosdevice) {
+    else if (/seamonkey\//i.test(ua)) {
+      return 'seamonkey';
+    }
+    else if (/silk/i.test(ua)) {
+      return 'silk';
+    }
+    else if (/yabrowser/i.test(ua)) {
+      return 'yandexbrowser';
+    }
+    else if (/phantom/i.test(ua)) {
+      return 'phantom';
+    }
+    else if (/sailfish/i.test(ua)) {
+      return 'sailfish';
+    }
+    // the android stock browser. Chrome/Firefox for android contain 'android',
+    // but will have returned above.
+    else if (/android/i.test(ua)) {
+      return 'android';
+    }
+    else if (/blackberry|\bbb\d+/i.test(ua) || /rim\stablet/i.test(ua)) {
+      return 'blackberry';
+    }
+  }
+
+  function getBrowserVersion(ua, browserName, osName) {
+      var versionIdentifier = getFirstMatch(ua, /version\/(\d+(\.\d+)?)/i);
+
+      if (browserName === 'opera') {
+        return versionIdentifier || getFirstMatch(ua, /(?:opera|opr)[\s\/](\d+(\.\d+)?)/i);
+      }
+      else if (browserName === 'yandexbrowser') {
+        return versionIdentifier || getFirstMatch(ua, /(?:yabrowser)[\s\/](\d+(\.\d+)?)/i);
+      }
+      else if (browserName === 'msie') {
+        return getFirstMatch(ua, /(?:msie |rv:)(\d+(\.\d+)?)/i);
+      }
+      else if (browserName === 'chrome') {
+        return getFirstMatch(ua, /(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i);
+      }
+      else if (browserName === 'msedge') {
+        return getFirstMatch(ua, /edge\/(\d+(\.\d+)?)/i);
+      }
+      else if (browserName === 'seamonkey') {
+        return getFirstMatch(ua, /seamonkey\/(\d+(\.\d+)?)/i);
+      }
+      else if (browserName === 'firefox') {
+        return getFirstMatch(/(?:firefox|iceweasel)[ \/](\d+(\.\d+)?)/i);
+      }
+      else if (browserName === 'silk') {
+        return getFirstMatch(/silk\/(\d+(\.\d+)?)/i);
+      }
+      else if (browserName === 'phantom') {
+        return getFirstMatch(/phantomjs\/(\d+(\.\d+)?)/i);
+      }
+      else if (browserName === 'sailfish') {
+        return getFirstMatch(ua, /sailfish\s?browser\/(\d+(\.\d+)?)/i);
+      }
+      else if (osName === 'android') {
+        return versionIdentifier;
+      }
+  }
+
+  function detect(ua) {
+    if (iosdevice) {
       result = {
         name : iosdevice == 'iphone' ? 'iPhone' : iosdevice == 'ipad' ? 'iPad' : 'iPod'
       }
@@ -101,48 +185,13 @@
         result.version = versionIdentifier
       }
     }
-    else if (/sailfish/i.test(ua)) {
-      result = {
-        name: 'Sailfish'
-      , sailfish: t
-      , version: getFirstMatch(/sailfish\s?browser\/(\d+(\.\d+)?)/i)
-      }
-    }
-    else if (/seamonkey\//i.test(ua)) {
-      result = {
-        name: 'SeaMonkey'
-      , seamonkey: t
-      , version: getFirstMatch(/seamonkey\/(\d+(\.\d+)?)/i)
-      }
-    }
-    else if (/firefox|iceweasel/i.test(ua)) {
       result = {
         name: 'Firefox'
       , firefox: t
-      , version: getFirstMatch(/(?:firefox|iceweasel)[ \/](\d+(\.\d+)?)/i)
+      , version:
       }
       if (/\((mobile|tablet);[^\)]*rv:[\d\.]+\)/i.test(ua)) {
         result.firefoxos = t
-      }
-    }
-    else if (/silk/i.test(ua)) {
-      result =  {
-        name: 'Amazon Silk'
-      , silk: t
-      , version : getFirstMatch(/silk\/(\d+(\.\d+)?)/i)
-      }
-    }
-    else if (android) {
-      result = {
-        name: 'Android'
-      , version: versionIdentifier
-      }
-    }
-    else if (/phantom/i.test(ua)) {
-      result = {
-        name: 'PhantomJS'
-      , phantom: t
-      , version: getFirstMatch(/phantomjs\/(\d+(\.\d+)?)/i)
       }
     }
     else if (/blackberry|\bbb\d+/i.test(ua) || /rim\stablet/i.test(ua)) {
@@ -152,7 +201,7 @@
       , version: versionIdentifier || getFirstMatch(/blackberry[\d]+\/(\d+(\.\d+)?)/i)
       }
     }
-    else if (/(web|hpw)os/i.test(ua)) {
+    else if (webos) {
       result = {
         name: 'WebOS'
       , webos: t
@@ -167,7 +216,7 @@
       , version: getFirstMatch(/dolfin\/(\d+(\.\d+)?)/i)
       };
     }
-    else if (/tizen/i.test(ua)) {
+    else if (tizen) {
       result = {
         name: 'Tizen'
       , tizen: t
@@ -207,6 +256,12 @@
     } else if (iosdevice) {
       result[iosdevice] = t
       result.ios = t
+    } else if (windows) {
+      result.windows = t
+    } else if (mac) {
+      result.mac = t
+    } else if (linux) {
+      result.linux = t
     }
 
     // OS version extraction
